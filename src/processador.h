@@ -7,6 +7,6 @@
 void preProcessarArquivo(FILE *entrada, FILE *saida);
 void removerComentarios(char *linha);
 bool removerLinhasVazias(char *linha);
-void normalizarEspacosETabulacoes();
+void normalizarEspacosETabulacoes(char * linha);
 
 #endif
