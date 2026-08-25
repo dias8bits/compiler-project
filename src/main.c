@@ -31,6 +31,8 @@ int main(int argc, char *argv[]) {
     FILE *entrada = abrirArquivoEntrada(inFileName, "r");
     FILE *saida = abrirArquivoSaida(outFileName, "w");
 
+    preProcessarArquivo(entrada, saida);
+
     fclose(entrada);
     fclose(saida);
 
@@ -47,7 +49,7 @@ int validarFileName(const char *nome, const char *ext) {
 }
 
 FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
-    const char *diretorio = "../inFile/";
+    const char *diretorio = "inFile/";
 
     char caminho[256] = "";
 
@@ -65,7 +67,7 @@ FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
 }
 
 FILE *abrirArquivoSaida(const char *fileName, const char *modo) {
-    const char *diretorio = "../outFile/";
+    const char *diretorio = "outFile/";
 
     char caminho[256] = "";
 
