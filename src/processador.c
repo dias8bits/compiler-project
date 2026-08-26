@@ -33,44 +33,37 @@ bool removerLinhasVazias(char *linha) {
 void normalizarEspacosETabulacoes(char *linha) {
     bool ehString = false;
     char resultado[512];
-    size_t escrever = 0;
+    int e = 0;
 
-    for (size_t i = 0; linha[i] != '\0'; i++) {
+    for (int i = 0; linha[i] != '\0' && e < (int)sizeof(resultado) - 1; i++) {
         char c = linha[i];
+
+        if (c == '\r' || c == '\n') {
+            continue;
+        }
+
+        if (!ehString && (c == ' ' || c == '\t')) {
+            if (e > 0 && resultado[e - 1] != ' ') {
+                resultado[e++] = ' ';
+            }
+            continue;
+        }
 
         if (c == '"') {
             ehString = !ehString;
-            resultado[escrever++] = c;
-            continue;
         }
 
-        if (!ehString && (c == ' ' || c == '\t' || c == '\n')) {
-            if (escrever > 0 && resultado[escrever - 1] != '\n') {
-                resultado[escrever++] = '\n';
-            }
-
-            while (linha[i + 1] == ' ' ||
-                   linha[i + 1] == '\t' ||
-                   linha[i + 1] == '\n') {
-                i++;
-            }
-
-            continue;
-        }
-
-        if (!ehString && strchr(".$,:", c) != NULL) {
-            if (escrever > 0 && resultado[escrever - 1] != '\n') {
-                resultado[escrever++] = '\n';
-            }
-
-            resultado[escrever++] = c;
-            resultado[escrever++] = '\n';
-            continue;
-        }
-
-        resultado[escrever++] = c;
+        resultado[e++] = c;
     }
 
-    resultado[escrever] = '\0';
+    while (e > 0 && resultado[e - 1] == ' ') {
+        e--;
+    }
+
+    if (e > 0) {
+        resultado[e++] = '\n';
+    }
+    resultado[e] = '\0';
+
     strcpy(linha, resultado);
 }
