@@ -35,7 +35,7 @@ void normalizarEspacosETabulacoes(char *linha) {
     char resultado[512];
     int e = 0;
 
-    for (int i = 0; linha[i] != '\0' && e < (int)sizeof(resultado) - 1; i++) {
+    for (int i = 0; linha[i] != '\0'; i++) {
         char c = linha[i];
 
         if (c == '\r' || c == '\n') {
