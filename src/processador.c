@@ -3,13 +3,18 @@
 
 void preProcessarArquivo(FILE *entrda, FILE *saida) {
     char linha[128];
+    bool ehEspaco = true;
 
     while (fgets(linha, sizeof(linha), entrda) != NULL){
         removerComentarios(linha);
         normalizarEspacosETabulacoes(linha);
 
         if (!removerLinhasVazias(linha)) {
+            if(!ehEspaco){
+                fputc('\n', saida);
+            }
             fputs(linha, saida);
+            ehEspaco = false;
         }
     }
 }
@@ -60,9 +65,6 @@ void normalizarEspacosETabulacoes(char *linha) {
         e--;
     }
 
-    if (e > 0) {
-        resultado[e++] = '\n';
-    }
     resultado[e] = '\0';
 
     strcpy(linha, resultado);
