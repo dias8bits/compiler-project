@@ -1,4 +1,4 @@
-#include "processador.h"
+#include "preprocessador.h"
 #include <string.h>
 
 void preProcessarArquivo(FILE *entrda, FILE *saida) {

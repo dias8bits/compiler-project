@@ -1,5 +1,5 @@
-#ifndef PROCESSADOR_H
-#define PROCESSADOR_H
+#ifndef PREPROCESSADOR_H
+#define PREPROCESSADOR_H
 
 #include <stdio.h>
 #include <stdbool.h>

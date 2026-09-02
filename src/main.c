@@ -1,4 +1,4 @@
-#include "processador.h"
+#include "preprocessador.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,7 +49,7 @@ int validarFileName(const char *nome, const char *ext) {
 }
 
 FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
-    const char *diretorio = "inFile/";
+    const char *diretorio = "../inFile/";
 
     char caminho[256] = "";
 
@@ -67,7 +67,7 @@ FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
 }
 
 FILE *abrirArquivoSaida(const char *fileName, const char *modo) {
-    const char *diretorio = "outFile/";
+    const char *diretorio = "../outFile/";
 
     char caminho[256] = "";
 
