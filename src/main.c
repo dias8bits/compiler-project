@@ -1,4 +1,5 @@
 #include "preprocessador.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,12 +30,12 @@ int main(int argc, char *argv[]) {
     }
 
     FILE *entrada = abrirArquivoEntrada(inFileName, "r");
-    FILE *saida = abrirArquivoSaida(outFileName, "w");
+    FILE *saidaPreProcessador = abrirArquivoSaida(outFileName, "w");
 
-    preProcessarArquivo(entrada, saida);
+    preProcessarArquivo(entrada, saidaPreProcessador);
 
     fclose(entrada);
-    fclose(saida);
+    fclose(saidaPreProcessador);
 
     return 0;
 }
@@ -49,14 +50,7 @@ int validarFileName(const char *nome, const char *ext) {
 }
 
 FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
-    const char *diretorio = "../inFile/";
-
-    char caminho[256] = "";
-
-    strncat(caminho, diretorio, sizeof(caminho) - 1);
-    strncat(caminho, fileName, sizeof(caminho) - strlen(caminho) - 1);
-
-    FILE *file = fopen(caminho, modo);
+    FILE *file = fopen(fileName, modo);
 
     if (file == NULL) {
         printf("ERRO: erro ao abrir arquivo de entrada: %s\n", fileName);
@@ -67,14 +61,7 @@ FILE *abrirArquivoEntrada(const char *fileName, const char *modo) {
 }
 
 FILE *abrirArquivoSaida(const char *fileName, const char *modo) {
-    const char *diretorio = "../outFile/";
-
-    char caminho[256] = "";
-
-    strncat(caminho, diretorio, sizeof(caminho) - 1);
-    strncat(caminho, fileName, sizeof(caminho) - strlen(caminho) - 1);
-
-    FILE *file = fopen(caminho, modo);
+    FILE *file = fopen(fileName, modo);
 
     if (file == NULL) {
         printf("ERRO: erro ao abrir arquivo de saida: %s\n", fileName);

@@ -2,7 +2,7 @@
 #include <string.h>
 
 void preProcessarArquivo(FILE *entrda, FILE *saida) {
-    char linha[128];
+    char linha[2048];
     bool ehEspaco = true;
 
     while (fgets(linha, sizeof(linha), entrda) != NULL){
@@ -37,7 +37,7 @@ bool removerLinhasVazias(char *linha) {
 
 void normalizarEspacosETabulacoes(char *linha) {
     bool ehString = false;
-    char resultado[512];
+    char resultado[2048];
     int e = 0;
 
     for (int i = 0; linha[i] != '\0'; i++) {
