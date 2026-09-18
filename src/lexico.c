@@ -63,3 +63,22 @@ static const char *REGISTRADORES[] = {
     "$s0", "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
     "$k0", "$k1",
     "$gp", "$sp", "$fp", "$ra",};
+
+void analiseLexica(FILE *inFile, FILE *outFile) {
+    char bufferLinha[2048];
+    int linha = 1;
+
+    while (fgets(bufferLinha, sizeof(bufferLinha), inFile) != NULL) {
+        int coluna = 1;
+        
+        for (int i = 0; bufferLinha[i] != '\0'; i++) {
+            char c = bufferLinha[i];
+            // if (c != '\n') {
+            //     printf("linha=%d coluna=%d char='%c'\n", linha, coluna, c);
+            // }
+            coluna++;
+        }
+
+    linha++;
+}
+}
