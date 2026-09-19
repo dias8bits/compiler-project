@@ -1,5 +1,12 @@
 #include "lexico.h"
 
+#include <string.h>
+#include <stdbool.h>
+
+#define NUM_DIRETIVAS 10
+#define NUM_INSTRUCOES 35
+#define NUM_REGISTRADORES 31
+
 typedef struct {
     const char *lexema;
     const char *token;
@@ -70,15 +77,245 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
 
     while (fgets(bufferLinha, sizeof(bufferLinha), inFile) != NULL) {
         int coluna = 1;
-        
+
         for (int i = 0; bufferLinha[i] != '\0'; i++) {
             char c = bufferLinha[i];
-            // if (c != '\n') {
-            //     printf("linha=%d coluna=%d char='%c'\n", linha, coluna, c);
-            // }
+            
+            Token token = reconhecerSimbolo(c, linha, coluna);
+            if (token.nome[0]!= '\0') {
+                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+            }
+            if (c == '.') {
+                Token token = reconhecerDiretiva(bufferLinha, i, coluna, linha);
+
+                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+
+                int tamLexema = strlen(token.lexema);
+                i += tamLexema - 1;
+                coluna += tamLexema - 1;
+            }
+
+            if ((c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                c == '_') {
+                Token token = reconhecerInstrucao(bufferLinha, i, coluna, linha);
+
+                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+                
+                int tamLexema = strlen(token.lexema);
+                i +=tamLexema - 1;
+                coluna += tamLexema - 1;
+            }
+
+            if (c == '$') {
+                Token token = reconhecerRegistrador(bufferLinha, i, coluna, linha);
+
+                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+
+                int tamLexema = strlen(token.lexema);
+                i += tamLexema - 1;
+                coluna += tamLexema - 1;
+            }
+
+            if (c == '"') {
+                Token token = reconhecerString(bufferLinha, i, coluna, linha);
+
+                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+
+                int tamLexema = strlen(token.lexema);
+                i += tamLexema - 1;
+                coluna += tamLexema - 1;
+            }
+
             coluna++;
         }
 
-    linha++;
+        linha++;
+    }
+
+    fprintf(outFile, "<TK_EOF, EOF> %d %d\n", linha, 1);
 }
+
+Token reconhecerSimbolo(char c, int linha, int coluna) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+    t.lexema[0] = c;
+    t.lexema[1] = '\0';
+
+    if (c == ',') {
+        strcpy(t.nome, "SMB_COM");
+    } else if (c == ':') {
+        strcpy(t.nome, "SMB_COL");
+    } else if (c == '(') {
+        strcpy(t.nome, "SMB_OPA");
+    } else if (c == ')') {
+        strcpy(t.nome, "SMB_CPA");
+    } else {
+        t.nome[0] = '\0';
+    }
+
+    return t;
+}
+
+Token reconhecerDiretiva(char *bufferLinha, int i, int coluna, int linha) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+
+    int tam = 0;
+
+    for (int j = i; ; j++) {
+        char ch = bufferLinha[j];
+        bool ehLetra = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+
+        if (ch != '.' && !ehLetra) break;
+
+        t.lexema[tam] = ch;
+        tam++;
+    }
+
+    t.lexema[tam] = '\0';
+
+    for (int k = 0; k < NUM_DIRETIVAS; k++) {
+        if (strcmp(t.lexema, DIRETIVAS[k].lexema) ==0) {
+            strcpy(t.nome, DIRETIVAS[k].token);
+            return t;
+        }
+    }
+
+    strcpy(t.nome, "ID");
+    return t;
+}
+
+Token reconhecerInstrucao(char *bufferLinha, int i, int coluna, int linha) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+
+    int tam = 0;
+
+    for (int j = i; ; j++) {
+        char ch = bufferLinha[j];
+        bool ehLetra = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+        bool ehDigito = (ch >= '0' && ch <= '9');
+
+        if (!ehLetra &&!ehDigito && ch != '_') break;
+
+        t.lexema[tam] = ch;
+        tam++;
+    }
+
+    t.lexema[tam] = '\0';
+
+    for (int k = 0; k < NUM_INSTRUCOES; k++) {
+        if (strcmp(t.lexema, INSTRUCOES[k].lexema) == 0) {
+            strcpy(t.nome, INSTRUCOES[k].token);
+            return t;
+        }
+    }
+
+    strcpy(t.nome, "ID");
+    return t;
+}
+
+Token reconhecerRegistrador(char *bufferLinha, int i, int coluna, int linha) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+
+    int tam = 0;
+
+    for (int j = i; ; j++) {
+        char ch = bufferLinha[j];
+        bool ehLetra = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
+        bool ehDigito = (ch >= '0' && ch <= '9');
+
+        if (ch != '$' && !ehLetra && !ehDigito) break;
+
+        t.lexema[tam] = ch;
+        tam++;
+    }
+
+    t.lexema[tam] = '\0';
+
+    for (int k = 0; k < NUM_REGISTRADORES; k++) {
+        if (strcmp(t.lexema, REGISTRADORES[k]) == 0) {
+            strcpy(t.nome, "REG");
+            return t;
+        }
+    }
+
+    bool ehNumerico = (tam > 1);
+    for (int k = 1; k < tam; k++) {
+        char ch = t.lexema[k];
+        if (ch < '0' || ch > '9') {
+            ehNumerico = false;
+        }
+    }
+
+    if (ehNumerico) {
+        int valor = 0;
+        for (int k = 1; k < tam; k++) {
+            valor = valor * 10 + (t.lexema[k] - '0');
+        }
+
+        if (valor >= 0 && valor <= 31) {
+            strcpy(t.nome, "REG");
+            return t;
+        }
+    }
+
+    strcpy(t.nome, "ERRO_REGISTRADOR_INVALIDO");
+    return t;
+}
+
+
+Token reconhecerString(char*bufferLinha, int i, int coluna, int linha) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+
+    int tam = 0;
+    t.lexema[tam] = bufferLinha[i];
+    tam++;
+
+    int j = i + 1;
+    bool fechou = false;
+
+    while (bufferLinha[j] != '\0' && bufferLinha[j] != '\n') {
+
+        if (bufferLinha[j] == '\\') {
+            t.lexema[tam] = bufferLinha[j];
+            tam++;
+            j++;
+
+            if (bufferLinha[j] != '\0' && bufferLinha[j] != '\n') {
+                t.lexema[tam] = bufferLinha[j];
+                tam++;
+                j++;
+            }
+            continue;
+        }
+
+        if (bufferLinha[j] == '"') {
+            t.lexema[tam] = bufferLinha[j];
+            tam++;
+            fechou = true;
+            break;
+        }
+        t.lexema[tam] = bufferLinha[j];
+        tam++;
+        j++;
+    }
+
+    t.lexema[tam] ='\0';
+
+    if (fechou) {
+        strcpy(t.nome, "STRING");
+    } else {
+        strcpy(t.nome, "ERRO_STRING_NAO_FECHADA");
+    }
+
+    return t;
 }
