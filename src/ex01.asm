@@ -10,4 +10,3 @@ main:
     li   $t1, 10      # segundo valor
 
     add  $t2, $t0, $t1
-

@@ -18,10 +18,13 @@ typedef struct {
 } Simbolo;
 
 void analiseLexica(FILE *in, FILE *out);
+void definirArquivoErro(FILE *err);
+void ehErro(FILE*outFile, Token token); 
 Token reconhecerSimbolo(char c, int linha, int coluna);
 Token reconhecerDiretiva(char *bufferLinha, int i, int coluna, int linha);
 Token reconhecerInstrucao(char *bufferLinha, int i, int coluna, int linha);
 Token reconhecerRegistrador(char *bufferLinha, int i, int coluna, int linha);
 Token reconhecerString(char *bufferLinha, int i, int coluna, int linha);
+Token reconhecerNumero(char *bufferLinha, int i, int coluna, int linha);
 
 #endif

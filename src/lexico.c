@@ -71,6 +71,13 @@ static const char *REGISTRADORES[] = {
     "$k0", "$k1",
     "$gp", "$sp", "$fp", "$ra",};
 
+static FILE *arquivoErro;
+static int totErros = 0;
+void definirArquivoErro(FILE *err) {
+    arquivoErro = err;
+    totErros = 0;
+}
+
 void analiseLexica(FILE *inFile, FILE *outFile) {
     char bufferLinha[2048];
     int linha = 1;
@@ -80,51 +87,68 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
 
         for (int i = 0; bufferLinha[i] != '\0'; i++) {
             char c = bufferLinha[i];
-            
+            bool reconhecido = false;
+
             Token token = reconhecerSimbolo(c, linha, coluna);
-            if (token.nome[0]!= '\0') {
-                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+            if (token.nome[0] != '\0') {
+                ehErro(outFile, token);
+                reconhecido = true;
             }
+
             if (c == '.') {
                 Token token = reconhecerDiretiva(bufferLinha, i, coluna, linha);
-
-                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
-
+                ehErro(outFile, token);
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
+                reconhecido = true;
             }
 
-            if ((c >= 'a' && c <= 'z') ||
-                (c >= 'A' && c <= 'Z') ||
-                c == '_') {
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
                 Token token = reconhecerInstrucao(bufferLinha, i, coluna, linha);
-
-                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
-                
+                ehErro(outFile, token);
                 int tamLexema = strlen(token.lexema);
-                i +=tamLexema - 1;
+                i += tamLexema - 1;
                 coluna += tamLexema - 1;
+                reconhecido = true;
             }
 
             if (c == '$') {
                 Token token = reconhecerRegistrador(bufferLinha, i, coluna, linha);
-
-                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
-
+                ehErro(outFile, token);
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
+                reconhecido = true;
             }
 
             if (c == '"') {
                 Token token = reconhecerString(bufferLinha, i, coluna, linha);
-
-                fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
-
+                ehErro(outFile, token);
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
+                reconhecido = true;
+            }
+
+            bool ehInicioNumero = (c >= '0' && c <= '9')
+                || (c == '-' && (bufferLinha[i + 1] >= '0' && bufferLinha[i + 1] <= '9'));
+
+            if (ehInicioNumero) {
+                Token token = reconhecerNumero(bufferLinha, i, coluna, linha);
+                ehErro(outFile, token);
+                int tamLexema = strlen(token.lexema);
+                i += tamLexema - 1;
+                coluna += tamLexema - 1;
+                reconhecido = true;
+            }
+
+            bool ehEspaco = (c == ' ' || c == '\t' || c == '\n' || c == '\r');
+
+            if (!reconhecido && !ehEspaco) {
+                char lexemaChar[2] = {c, '\0'};
+                fprintf(arquivoErro, "<ERRO_CARACTERE_INVALIDO, %s> %d %d\n", lexemaChar, linha, coluna);
+                totErros++;
             }
 
             coluna++;
@@ -134,6 +158,10 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
     }
 
     fprintf(outFile, "<TK_EOF, EOF> %d %d\n", linha, 1);
+
+    if (totErros == 0) {
+        fprintf(arquivoErro, "nenhum erro lexico encontrado.\n");
+    }
 }
 
 Token reconhecerSimbolo(char c, int linha, int coluna) {
@@ -184,7 +212,7 @@ Token reconhecerDiretiva(char *bufferLinha, int i, int coluna, int linha) {
         }
     }
 
-    strcpy(t.nome, "ID");
+    strcpy(t.nome, "ERRO_DIRETIVA_INVALIDA");
     return t;
 }
 
@@ -318,4 +346,39 @@ Token reconhecerString(char*bufferLinha, int i, int coluna, int linha) {
     }
 
     return t;
+}
+
+Token reconhecerNumero(char *bufferLinha, int i, int coluna, int linha) {
+    Token t;
+    t.linha = linha;
+    t.coluna = coluna;
+
+    int tam = 0;
+
+    for (int j = i; ; j++) {
+        char ch = bufferLinha[j];
+        bool ehDigito = (ch >= '0' && ch <= '9');
+        bool ehLetraHex = (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+
+        if (ch != '-' && ch != 'x' && !ehDigito && !ehLetraHex) break;
+
+        t.lexema[tam] = ch;
+        tam++;
+    }
+
+    t.lexema[tam] = '\0';
+
+    strcpy(t.nome, "NUM_INT");
+    return t;
+}
+
+void ehErro(FILE*outFile, Token token) {
+    bool ehErro = (token.nome[0] == 'E' && token.nome[1] == 'R' && token.nome[2] == 'R' && token.nome[3] == 'O');
+
+    if (ehErro) {
+        fprintf(arquivoErro, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+        totErros++;
+    } else {
+        fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+    }
 }

@@ -9,6 +9,7 @@ int validarFileName(const char *nome, const char *ext);
 FILE *abrirArquivoEntrada(const char *fileName, const char *modo);
 FILE *abrirArquivoSaida(const char *fileName, const char *modo);
 void gerarNomePre(const char *lexFileName, char *destino, size_t tamDestino);
+void gerarNomeErr(const char *lexFileName, char *destino, size_t tamDestino);
 
 int main(int argc, char *argv[]) {
 
@@ -34,6 +35,9 @@ int main(int argc, char *argv[]) {
     char preFileName[256];
     gerarNomePre(lexFileName, preFileName, sizeof(preFileName));
 
+    char errFileName[256];
+    gerarNomeErr(lexFileName, errFileName, sizeof(errFileName));
+
     FILE *entrada = abrirArquivoEntrada(inFileName, "r");
     FILE *saidaPreProcessador = abrirArquivoSaida(preFileName, "w");
 
@@ -44,11 +48,14 @@ int main(int argc, char *argv[]) {
 
     FILE *entradaPreProcessador = abrirArquivoEntrada(preFileName, "r");
     FILE *saidaAnaliseLexica = abrirArquivoSaida(lexFileName, "w");
+    FILE *saidaErr = abrirArquivoSaida(errFileName, "w");
 
+    definirArquivoErro(saidaErr);
     analiseLexica(entradaPreProcessador, saidaAnaliseLexica);
 
     fclose(entradaPreProcessador);
     fclose(saidaAnaliseLexica);
+    fclose(saidaErr);
 
     return 0;
 }
@@ -92,4 +99,14 @@ void gerarNomePre(const char *lexFileName, char *destino, size_t tamDestino) {
     destino[len - 3] = 'p';
     destino[len - 2] = 'r';
     destino[len - 1] = 'e';
+}
+
+void gerarNomeErr(const char *lexFileName, char *destino, size_t tamDestino) {
+    strncpy(destino, lexFileName, tamDestino - 1);
+    destino[tamDestino - 1] = '\0';
+
+    size_t len = strlen(destino);
+    destino[len - 3] = 'e';
+    destino[len - 2] = 'r';
+    destino[len - 1] = 'r';
 }
