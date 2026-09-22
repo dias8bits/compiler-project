@@ -10,6 +10,7 @@ FILE *abrirArquivoEntrada(const char *fileName, const char *modo);
 FILE *abrirArquivoSaida(const char *fileName, const char *modo);
 void gerarNomePre(const char *lexFileName, char *destino, size_t tamDestino);
 void gerarNomeErr(const char *lexFileName, char *destino, size_t tamDestino);
+void gerarNomeTs(const char *lexFileName, char *destino, size_t tamDestino);
 
 int main(int argc, char *argv[]) {
 
@@ -38,6 +39,9 @@ int main(int argc, char *argv[]) {
     char errFileName[256];
     gerarNomeErr(lexFileName, errFileName, sizeof(errFileName));
 
+    char tsFileName[256];
+    gerarNomeTs(lexFileName, tsFileName, sizeof(tsFileName));
+
     FILE *entrada = abrirArquivoEntrada(inFileName, "r");
     FILE *saidaPreProcessador = abrirArquivoSaida(preFileName, "w");
 
@@ -49,13 +53,18 @@ int main(int argc, char *argv[]) {
     FILE *entradaPreProcessador = abrirArquivoEntrada(preFileName, "r");
     FILE *saidaAnaliseLexica = abrirArquivoSaida(lexFileName, "w");
     FILE *saidaErr = abrirArquivoSaida(errFileName, "w");
+    FILE *saidaTs = abrirArquivoSaida(tsFileName, "w");
 
     definirArquivoErro(saidaErr);
+
     analiseLexica(entradaPreProcessador, saidaAnaliseLexica);
+
+    escreverTabelaSimbolos(saidaTs);
 
     fclose(entradaPreProcessador);
     fclose(saidaAnaliseLexica);
     fclose(saidaErr);
+    fclose(saidaTs);
 
     return 0;
 }
@@ -109,4 +118,14 @@ void gerarNomeErr(const char *lexFileName, char *destino, size_t tamDestino) {
     destino[len - 3] = 'e';
     destino[len - 2] = 'r';
     destino[len - 1] = 'r';
+}
+
+void gerarNomeTs(const char *lexFileName, char *destino, size_t tamDestino) {
+    strncpy(destino, lexFileName, tamDestino - 1);
+    destino[tamDestino - 1] = '\0';
+
+    size_t len = strlen(destino);
+    destino[len - 3] = 't';
+    destino[len - 2] = 's';
+    destino[len - 1] = '\0';
 }

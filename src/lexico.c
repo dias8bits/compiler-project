@@ -4,7 +4,7 @@
 #include <stdbool.h>
 
 #define NUM_DIRETIVAS 10
-#define NUM_INSTRUCOES 35
+#define NUM_INSTRUCOES 36
 #define NUM_REGISTRADORES 31
 
 typedef struct {
@@ -73,12 +73,28 @@ static const char *REGISTRADORES[] = {
 
 static FILE *arquivoErro;
 static int totErros = 0;
+
 void definirArquivoErro(FILE *err) {
     arquivoErro = err;
     totErros = 0;
 }
 
+static Simbolo tabelaSimbolos[1024];
+static int totalSimbolos = 0;
+
 void analiseLexica(FILE *inFile, FILE *outFile) {
+    for (int k = 0; k < NUM_DIRETIVAS; k++) {
+        inserirSimbolo((char *) DIRETIVAS[k].lexema, "diretiva", 0, 0);
+    }
+
+    for (int k = 0; k < NUM_INSTRUCOES; k++) {
+        inserirSimbolo((char *) INSTRUCOES[k].lexema, "instrucao", 0, 0);
+    }
+
+    for (int k = 0; k < NUM_REGISTRADORES; k++) {
+        inserirSimbolo((char *) REGISTRADORES[k], "registrador", 0, 0);
+    }
+
     char bufferLinha[2048];
     int linha = 1;
 
@@ -98,6 +114,11 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
             if (c == '.') {
                 Token token = reconhecerDiretiva(bufferLinha, i, coluna, linha);
                 ehErro(outFile, token);
+
+                if (strcmp(token.nome, "ERRO_DIRETIVA_INVALIDA") != 0) {
+                    inserirSimbolo(token.lexema, "diretiva", token.linha, token.coluna);
+                }
+
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
@@ -107,6 +128,13 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
             if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_') {
                 Token token = reconhecerInstrucao(bufferLinha, i, coluna, linha);
                 ehErro(outFile, token);
+
+                if (strcmp(token.nome, "ID") == 0) {
+                    inserirSimbolo(token.lexema, "identificador/rotulo", token.linha, token.coluna);
+                } else {
+                    inserirSimbolo(token.lexema, "instrucao", token.linha, token.coluna);
+                }
+
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
@@ -116,6 +144,11 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
             if (c == '$') {
                 Token token = reconhecerRegistrador(bufferLinha, i, coluna, linha);
                 ehErro(outFile, token);
+
+                if (strcmp(token.nome, "REG") == 0) {
+                    inserirSimbolo(token.lexema, "registrador", token.linha, token.coluna);
+                }
+
                 int tamLexema = strlen(token.lexema);
                 i += tamLexema - 1;
                 coluna += tamLexema - 1;
@@ -160,7 +193,7 @@ void analiseLexica(FILE *inFile, FILE *outFile) {
     fprintf(outFile, "<TK_EOF, EOF> %d %d\n", linha, 1);
 
     if (totErros == 0) {
-        fprintf(arquivoErro, "nenhum erro lexico encontrado.\n");
+        fprintf(arquivoErro, "nenhum erro lexico encontrado\n");
     }
 }
 
@@ -380,5 +413,39 @@ void ehErro(FILE*outFile, Token token) {
         totErros++;
     } else {
         fprintf(outFile, "<%s, %s> %d %d\n", token.nome, token.lexema, token.linha, token.coluna);
+    }
+}
+
+void inserirSimbolo(char *lexema, char *categoria, int linha, int coluna) {
+    for (int k = 0; k < totalSimbolos; k++) {
+        if (strcmp(tabelaSimbolos[k].lexema, lexema) == 0) {
+            if (tabelaSimbolos[k].primeiraLinha == 0 && linha != 0) {
+                tabelaSimbolos[k].primeiraLinha = linha;
+                tabelaSimbolos[k].primeiraColuna = coluna;
+            }
+            return;
+        }
+    }
+
+    if (totalSimbolos >= 1024) {
+        return;
+    }
+
+    strcpy(tabelaSimbolos[totalSimbolos].lexema, lexema);
+    strcpy(tabelaSimbolos[totalSimbolos].categoria, categoria);
+    tabelaSimbolos[totalSimbolos].primeiraLinha = linha;
+    tabelaSimbolos[totalSimbolos].primeiraColuna = coluna;
+    totalSimbolos++;
+}
+
+void escreverTabelaSimbolos(FILE *outTs) {
+    fprintf(outTs, "LEXEMA,CATEGORIA,LINHA,COLUNA\n");
+
+    for (int k = 0; k < totalSimbolos; k++) {
+        fprintf(outTs, "%s,%s,%d,%d\n",
+            tabelaSimbolos[k].lexema,
+            tabelaSimbolos[k].categoria,
+            tabelaSimbolos[k].primeiraLinha,
+            tabelaSimbolos[k].primeiraColuna);
     }
 }

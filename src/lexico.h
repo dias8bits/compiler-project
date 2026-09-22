@@ -20,6 +20,8 @@ typedef struct {
 void analiseLexica(FILE *in, FILE *out);
 void definirArquivoErro(FILE *err);
 void ehErro(FILE*outFile, Token token); 
+void inserirSimbolo(char *lexema, char *categoria, int linha, int coluna);
+void escreverTabelaSimbolos(FILE *outTs);
 Token reconhecerSimbolo(char c, int linha, int coluna);
 Token reconhecerDiretiva(char *bufferLinha, int i, int coluna, int linha);
 Token reconhecerInstrucao(char *bufferLinha, int i, int coluna, int linha);
