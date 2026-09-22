@@ -391,9 +391,9 @@ Token reconhecerNumero(char *bufferLinha, int i, int coluna, int linha) {
     for (int j = i; ; j++) {
         char ch = bufferLinha[j];
         bool ehDigito = (ch >= '0' && ch <= '9');
-        bool ehLetraHex = (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+        bool ehLetra = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z');
 
-        if (ch != '-' && ch != 'x' && !ehDigito && !ehLetraHex) break;
+        if (ch != '-' && !ehDigito && !ehLetra) break;
 
         t.lexema[tam] = ch;
         tam++;
@@ -401,7 +401,34 @@ Token reconhecerNumero(char *bufferLinha, int i, int coluna, int linha) {
 
     t.lexema[tam] = '\0';
 
-    strcpy(t.nome, "NUM_INT");
+    int inicio = (t.lexema[0] == '-') ? 1 : 0;
+    bool ehHex = (t.lexema[inicio] == '0' && t.lexema[inicio + 1] == 'x');
+
+    bool valido = true;
+    int k = inicio;
+
+    if (ehHex) {
+        k += 2;
+        if (t.lexema[k] == '\0') valido = false;
+        for (; t.lexema[k] != '\0'; k++) {
+            char ch = t.lexema[k];
+            bool ehDigito = (ch >= '0' && ch <= '9');
+            bool ehHexLetra = (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
+            if (!ehDigito && !ehHexLetra) valido = false;
+        }
+    } else {
+        if (t.lexema[k] == '\0') valido = false;
+        for (; t.lexema[k] != '\0'; k++) {
+            if (t.lexema[k] < '0' || t.lexema[k] > '9') valido = false;
+        }
+    }
+
+    if (valido) {
+        strcpy(t.nome, "NUM_INT");
+    } else {
+        strcpy(t.nome, "ERRO_NUMERO_MALFORMADO");
+    }
+
     return t;
 }
 
